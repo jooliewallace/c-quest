@@ -23,6 +23,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float runMultiplier = 3.0f;
     [SerializeField] float jumpHeight = 1.0f;
     float verticalVelocity;
+    private float jumpVelocity;
 
     void Awake()
     {
@@ -34,6 +35,8 @@ public class PlayerController : MonoBehaviour
         isRunningHash = Animator.StringToHash("isRunning");
         isJumpingHash = Animator.StringToHash("isJumping");
 
+        jumpVelocity = Mathf.Sqrt(2 * jumpHeight * Mathf.Abs(Physics.gravity.y));
+
         playerInput.CharacterControls.Move.started += OnMovementInput;
         playerInput.CharacterControls.Move.canceled += OnMovementInput;
         playerInput.CharacterControls.Move.performed += OnMovementInput;
@@ -43,6 +46,7 @@ public class PlayerController : MonoBehaviour
 
         playerInput.Enable();
     }
+
 
     void OnRun(InputAction.CallbackContext context)
     {
@@ -109,7 +113,12 @@ public class PlayerController : MonoBehaviour
                 if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f)
                 {
                     animator.SetBool(isJumpingHash, false);
+                    verticalVelocity = 0f; // Reset the vertical velocity to zero after the jump animation ends
                 }
+            }
+            else
+            {
+                animator.SetBool(isJumpingHash, false);
             }
         }
         else
@@ -118,31 +127,44 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+
     void Jump()
     {
         if (isGrounded)
         {
+            jumpVelocity = Mathf.Sqrt(2 * jumpHeight * Mathf.Abs(Physics.gravity.y));
+            verticalVelocity = 0f;
             animator.SetBool(isJumpingHash, true);
-            verticalVelocity = Mathf.Sqrt(2 * jumpHeight * Mathf.Abs(Physics.gravity.y));
-            currentMovement.y = verticalVelocity;
+            currentMovement.y = jumpVelocity;
         }
     }
+
+
 
     void HandleGravity()
     {
         isGrounded = characterController.isGrounded;
 
-        if (isGrounded)
+        if (!isGrounded)
         {
-            verticalVelocity = -2.0f;
+            // Apply gravity every frame
+            verticalVelocity -= Physics.gravity.y * Time.deltaTime;
+
+            // Limit the jump height
+            if (verticalVelocity < -jumpHeight)
+            {
+                verticalVelocity = -jumpHeight;
+            }
+
+            currentMovement.y = verticalVelocity;
         }
         else
         {
-            verticalVelocity += Physics.gravity.y * Time.deltaTime;
+            // Reset vertical velocity to 0 if grounded
+            verticalVelocity = 0f;
         }
-
-        currentMovement.y = verticalVelocity;
     }
+
 
     void Update()
     {
