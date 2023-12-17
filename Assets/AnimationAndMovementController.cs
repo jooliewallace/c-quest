@@ -13,16 +13,16 @@ public class PlayerController : MonoBehaviour
     int isRunningHash;
     int isJumpingHash;
 
-    //variables to store player input values
     Vector2 currentMovementInput;
     Vector3 currentMovement;
-    Vector3 currentRunMovement;
     bool isMovementPressed;
     bool isRunPressed;
-    bool isJumpPressed;
+    bool isGrounded;
+
     float rotationFactorPerFrame = 15.0f;
-    [SerializeField] public float runMultiplier = 3.0f;
-    [SerializeField] public float jumpForce = 5.0f;
+    [SerializeField] float runMultiplier = 3.0f;
+    [SerializeField] float jumpHeight = 1.0f;
+    float verticalVelocity;
 
     void Awake()
     {
@@ -34,33 +34,32 @@ public class PlayerController : MonoBehaviour
         isRunningHash = Animator.StringToHash("isRunning");
         isJumpingHash = Animator.StringToHash("isJumping");
 
-        playerInput.CharacterControls.Move.started += onMovementInput;
-        playerInput.CharacterControls.Move.canceled += onMovementInput;
-        playerInput.CharacterControls.Move.performed += onMovementInput;
-        playerInput.CharacterControls.Run.started += onRun;
-        playerInput.CharacterControls.Run.canceled += onRun;
-        playerInput.CharacterControls.Jump.performed += onJump;
+        playerInput.CharacterControls.Move.started += OnMovementInput;
+        playerInput.CharacterControls.Move.canceled += OnMovementInput;
+        playerInput.CharacterControls.Move.performed += OnMovementInput;
+        playerInput.CharacterControls.Run.started += OnRun;
+        playerInput.CharacterControls.Run.canceled += OnRun;
+        playerInput.CharacterControls.Jump.performed += OnJump;
+
+        playerInput.Enable();
     }
 
-    void onRun(InputAction.CallbackContext context)
+    void OnRun(InputAction.CallbackContext context)
     {
         isRunPressed = context.ReadValueAsButton();
     }
 
-    void onJump(InputAction.CallbackContext context)
+    void OnJump(InputAction.CallbackContext context)
     {
-        if (context.performed)
+        if (context.performed && isGrounded)
         {
-            isJumpPressed = true;
+            Jump();
         }
     }
 
-    void handleRotation()
+    void HandleRotation()
     {
-        Vector3 positionToLookAt;
-        positionToLookAt.x = currentMovement.x;
-        positionToLookAt.y = 0.0f;
-        positionToLookAt.z = currentMovement.z;
+        Vector3 positionToLookAt = new Vector3(currentMovement.x, 0.0f, currentMovement.z);
         Quaternion currentRotation = transform.rotation;
 
         if (isMovementPressed)
@@ -70,46 +69,48 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void onMovementInput(InputAction.CallbackContext context)
+    void OnMovementInput(InputAction.CallbackContext context)
     {
         currentMovementInput = context.ReadValue<Vector2>();
         currentMovement.x = currentMovementInput.x;
         currentMovement.z = currentMovementInput.y;
-        currentRunMovement.x = currentMovementInput.x * runMultiplier;
-        currentRunMovement.z = currentMovementInput.y * runMultiplier;
         isMovementPressed = currentMovementInput.x != 0 || currentMovementInput.y != 0;
     }
 
-    void handleAnimation()
+    void HandleAnimation()
     {
         bool isWalking = animator.GetBool(isWalkingHash);
         bool isRunning = animator.GetBool(isRunningHash);
         bool isJumping = animator.GetBool(isJumpingHash);
 
-        // start walking if movement pressed is true and not already walking
-        if (isMovementPressed && !isWalking)
+        if (isGrounded)
         {
-            animator.SetBool(isWalkingHash, true);
-        }
-        // stop walking if isMovementPressed is false and not already walking
-        else if (!isMovementPressed && isWalking)
-        {
-            animator.SetBool(isWalkingHash, false);
-        }
+            if (isMovementPressed && !isWalking)
+            {
+                animator.SetBool(isWalkingHash, true);
+            }
+            else if (!isMovementPressed && isWalking)
+            {
+                animator.SetBool(isWalkingHash, false);
+            }
 
-        if ((isMovementPressed && isRunPressed) && !isRunning)
-        {
-            animator.SetBool(isRunningHash, true);
-        }
-        else if ((!isMovementPressed || !isRunPressed) && isRunning)
-        {
-            animator.SetBool(isRunningHash, false);
-        }
+            if ((isMovementPressed && isRunPressed) && !isRunning)
+            {
+                animator.SetBool(isRunningHash, true);
+            }
+            else if ((!isMovementPressed || !isRunPressed) && isRunning)
+            {
+                animator.SetBool(isRunningHash, false);
+            }
 
-        // trigger jump animation
-        if (isJumpPressed && characterController.isGrounded)
-        {
-            animator.SetBool(isJumpingHash, true);
+            if (isJumping)
+            {
+                // Check if the normalized time of the animation is greater than or equal to 1
+                if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f)
+                {
+                    animator.SetBool(isJumpingHash, false);
+                }
+            }
         }
         else
         {
@@ -117,54 +118,44 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void handleGravity()
+    void Jump()
     {
-        if (characterController.isGrounded)
+        if (isGrounded)
         {
-            float groundedGravity = -0.5f;
-            currentMovement.y = groundedGravity;
-            currentRunMovement.y = groundedGravity;
+            animator.SetBool(isJumpingHash, true);
+            verticalVelocity = Mathf.Sqrt(2 * jumpHeight * Mathf.Abs(Physics.gravity.y));
+            currentMovement.y = verticalVelocity;
+        }
+    }
 
-            // reset jump state when grounded
-            isJumpPressed = false;
+    void HandleGravity()
+    {
+        isGrounded = characterController.isGrounded;
+
+        if (isGrounded)
+        {
+            verticalVelocity = -2.0f;
         }
         else
         {
-            float gravity = -9.8f;
-            currentMovement.y += gravity;
-            currentRunMovement.y += gravity;
+            verticalVelocity += Physics.gravity.y * Time.deltaTime;
         }
+
+        currentMovement.y = verticalVelocity;
     }
 
     void Update()
     {
-        handleRotation();
-        handleAnimation();
-        handleGravity();
+        HandleRotation();
+        HandleAnimation();
+        HandleGravity();
 
-        if (isRunPressed)
-        {
-            characterController.Move(currentRunMovement * Time.deltaTime);
-        }
-        else
-        {
-            characterController.Move(currentMovement * Time.deltaTime);
-        }
-
-        // apply jump force
-        if (isJumpPressed && characterController.isGrounded)
-        {
-            currentMovement.y = jumpForce;
-        }
-    }
-
-    void OnEnable()
-    {
-        playerInput.CharacterControls.Enable();
+        Vector3 move = isRunPressed ? currentMovement * runMultiplier : currentMovement;
+        characterController.Move(move * Time.deltaTime);
     }
 
     void OnDisable()
     {
-        playerInput.CharacterControls.Disable();
+        playerInput.Disable();
     }
 }
