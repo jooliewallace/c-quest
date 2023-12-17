@@ -4303,7 +4303,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   runMultiplier: 100
-  jumpHeight: 20
+  jumpForce: 5
 --- !u!143 &1851933553
 CharacterController:
   m_ObjectHideFlags: 0
