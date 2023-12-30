@@ -15,22 +15,21 @@ public class CharacterSelection : MonoBehaviour
         characters[selectedCharacter].SetActive(true);
     }
 
-public void PreviousCharacter()
+    public void PreviousCharacter()
     {
         characters[selectedCharacter].SetActive(false);
         selectedCharacter--;
-
         if (selectedCharacter < 0)
         {
             selectedCharacter += characters.Length;
         }
-
         characters[selectedCharacter].SetActive(true);
     }
 
-public void StartGame()
+    public void StartGame()
     {
         PlayerPrefs.SetInt("selectedCharacter", selectedCharacter);
         SceneManager.LoadScene(1, LoadSceneMode.Single);
+
     }
 }
