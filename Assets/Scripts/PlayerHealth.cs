@@ -2,60 +2,64 @@
 
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerHealth : MonoBehaviour
 {
-    public int maxLives = 3; // Maximum number of lives
-    public int currentLives; // Current number of lives
-    public TMP_Text livesText; // Reference to a TMP text element to display lives (optional)
+    public int maxLives = 3;
+    public int currentLives;
+    public TMP_Text livesText;
+
+    private Vector3 respawnPosition; // Store the respawn position
 
     private void Start()
     {
+        Debug.Log("Start method in countdown is called!");
+
         currentLives = maxLives;
+        respawnPosition = transform.position; // Record the initial position as the respawn position
         UpdateLivesUI();
     }
 
     private void UpdateLivesUI()
     {
-        // Update the TMP text to display the current number of lives
         if (livesText != null)
         {
-            livesText.text = "Lives: " + Mathf.Max(0, currentLives); // Ensure it doesn't display negative lives
+            livesText.text = "Lives: " + Mathf.Max(0, currentLives);
         }
     }
 
     public void TakeDamage()
     {
-        // Decrement the number of lives
-        currentLives--;
+        Debug.Log("Player took damage!");
 
-        // Update the UI
+        currentLives--;
         UpdateLivesUI();
 
-        // Check if the player is out of lives
         if (currentLives <= 0)
         {
-            currentLives = 0; // Ensure lives don't go negative
+            currentLives = 0;
             GameOver();
         }
         else
         {
-            // Handle other actions when the player takes damage (e.g., respawn)
             Respawn();
         }
     }
 
     private void Respawn()
     {
-        // Implement logic for respawning the player
-        // This could involve resetting the player's position, restoring health, etc.
-        Debug.Log("Respawn the player!");
+        // Reset the player's position to the respawn position
+        transform.position = respawnPosition;
+        Debug.Log("Respawn the player to the position: " + respawnPosition);
     }
+
 
     private void GameOver()
     {
-        // Implement actions for when the player runs out of lives
-        // This could involve showing a game over screen, resetting the level, etc.
         Debug.Log("Game Over!");
+
+        // Load the "Game Over" scene
+        SceneManager.LoadScene("GameOver"); // Replace "GameOverScene" with the actual name of your scene
     }
 }
