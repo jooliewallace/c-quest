@@ -6,7 +6,6 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField]
     private float rotationSpeed;
 
-
     [SerializeField]
     private float jumpSpeed;
 
@@ -85,7 +84,13 @@ public class PlayerMovement : MonoBehaviour
 
             if (Time.time - jumpButtonPressedTime <= jumpButtonGracePeriod)
             {
+                // Calculate the jump direction based on the current movement direction
+                Vector3 jumpDirection = movementDirection.normalized;
+
+                // Apply the jump force
                 ySpeed = jumpSpeed;
+                ySpeed += jumpDirection.y * jumpHorizontalSpeed; // Apply horizontal speed
+
                 animator.SetBool("isJumping", true);
                 isJumping = true;
                 jumpButtonPressedTime = null;
