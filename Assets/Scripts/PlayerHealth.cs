@@ -1,4 +1,3 @@
-// PlayerHealth.cs
 
 using TMPro;
 using UnityEngine;
@@ -59,7 +58,6 @@ public class PlayerHealth : MonoBehaviour
     {
         Debug.Log("Game Over!");
 
-        // Load the "Game Over" scene
-        SceneManager.LoadScene("GameOver"); // Replace "GameOverScene" with the actual name of your scene
+        SceneManager.LoadScene("GameOver"); 
     }
 }
