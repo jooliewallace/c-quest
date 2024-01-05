@@ -22,7 +22,7 @@ public class PlayerMovement : MonoBehaviour
     private Transform cameraTransform;
 
     [SerializeField]
-    private float increasedGravity = 10f; // Adjust this value to increase the falling speed
+    private float increasedGravity = 10f; // Speed control
 
     private Animator animator;
     private CharacterController characterController;
@@ -33,7 +33,7 @@ public class PlayerMovement : MonoBehaviour
     private bool isJumping;
     private bool isGrounded;
 
-    private Vector3 movementDirection; // Declare at the class level
+    private Vector3 movementDirection; 
 
     void Start()
     {
@@ -121,7 +121,7 @@ public class PlayerMovement : MonoBehaviour
 
             Quaternion toRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
 
-            // Use Quaternion.Slerp for smooth rotation
+            // Use Quaternion.Slerp to make the rotation smooth
             transform.rotation = Quaternion.Slerp(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
         }
         else
